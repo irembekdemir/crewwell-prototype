@@ -1,32 +1,69 @@
 # CrewWell — Astronaut Health Monitoring Prototype
 
-CrewWell is a prototype prepared for the **NASA Space Apps Challenge**, focused on monitoring astronauts’ health during space missions. It brings health and environmental records into a dashboard, visualizes trends, and presents non-diagnostic check-in notifications.
+CrewWell is a responsive React + TypeScript dashboard prototype designed to explore how astronaut health and environmental measurements can be collected, visualized over time, and surfaced as non-diagnostic mission alerts. The project brings health metrics, trend analysis, and NASA open-data exploration into a single interface for a fictional mission crew.
 
-AI tools assisted with coding and drafting parts of this project. The team reviewed and adapted the generated code. AI use is disclosed here and in the project source documentation. No NASA logos or branding are used in AI-generated material.
+The prototype is intended for educational and hackathon/demo use. It does not diagnose illness or provide clinical recommendations. It is designed to demonstrate how a mission health dashboard could present overview data, detect illustrative outliers, and keep demo records clearly separated from research datasets.
 
-## NASA data and resources
+## Why this project matters
 
-The prototype provides a local CSV import and visualization workflow for NASA OSDR research data. The linked example is **OSD-575: SpaceX Inspiration4 Blood Serum Metabolic Panel and Immune/Cardiac Cytokine Arrays (Comprehensive Metabolic Panel and Multiplex)**.
+Long-duration missions require clear visibility into crew health. This project explores a simple mission-view concept that helps teams:
 
-- [Official OSDR study record (OSD-575)](https://osdr.nasa.gov/bio/repo/data/studies/OSD-575)
-- [OSD-575 study files](https://osdr.nasa.gov/osdr/data/osd/files/575)
-- [NASA announcement of Inspiration4 datasets](https://www.nasa.gov/osdr-latest-news-i4-mission-datasets/)
-- [OSDR dataset API record](https://visualization.osdr.nasa.gov/biodata/api/v2/dataset/OSD-575/)
-
-Download a tabular CSV from the official OSDR study files page and import it in the **Inspiration4 research data** panel. Choose a numeric field and, when available, a timepoint/label field. The CSV is parsed in the browser and is not uploaded. Import limits are 5 MB, 5,000 rows, and 100 columns. Consult the OSDR record for the exact data dictionary, units, sample/timepoint context, citation, and reuse terms before interpreting or redistributing data.
-
-OSD-575 research data is kept separate from simulated demo-crew records. It represents historical research data, not live telemetry or a measurement from the demo crew profile. The project does not claim a live NASA device/API connection.
+- track daily or recurring health measurements,
+- compare trends over time,
+- highlight unusual values as illustrative alerts,
+- distinguish simulated demo data from public research data,
+- keep the user interface understandable and lightweight.
 
 ## Features
 
-- Health summary cards for heart rate, blood pressure, glucose, temperature, sleep, radiation, noise, and bone-density records.
-- Manual measurement entry, including separate systolic and diastolic blood-pressure values.
-- Measurement history, per-metric trend chart, and browser-local `localStorage` persistence.
-- Clearly labeled simulated demo data and illustrative, non-diagnostic notifications.
-- Local CSV import with file size, row, and column limits.
-- Optional English browser speech commands where supported, with a microphone privacy notice.
-- A control to clear locally stored measurement records.
-- Responsive dashboard layout.
+- Health summary cards for heart rate, blood pressure, glucose, temperature, sleep, radiation, noise, and bone-density records
+- Manual measurement entry, including separate systolic and diastolic blood-pressure values
+- Historical measurement logs and a per-metric trend chart
+- Browser-local persistence using `localStorage`
+- Simulated demo data clearly labeled as **Simulation**
+- Optional English browser speech commands for quick status checks and simple entry
+- Local CSV import for compatible NASA OSDR tabular data
+- Responsive dark dashboard layout
+- Clear local-data reset controls and privacy notices
+
+## NASA data and open resources
+
+This project includes a NASA open-data workflow centered on the OSDR study record for:
+
+- OSD-575 — SpaceX Inspiration4 Blood Serum Metabolic Panel and Immune/Cardiac Cytokine Arrays
+
+Official references:
+
+- OSDR study page: https://osdr.nasa.gov/bio/repo/data/studies/OSD-575
+- OSDR study files: https://osdr.nasa.gov/osdr/data/osd/files/575
+- NASA announcement: https://www.nasa.gov/osdr-latest-news-i4-mission-datasets/
+- OSDR API metadata: https://visualization.osdr.nasa.gov/biodata/api/v2/dataset/OSD-575/
+
+The app supports importing a locally downloaded CSV from the research data page. The CSV is parsed in the browser and is not uploaded to a server. This is a lightweight exploratory workflow for public tabular data and is not a live telemetry connection to NASA systems.
+
+## AI use disclosure
+
+AI tools were used to assist with coding and drafting portions of this project. The output was reviewed, modified, and adapted by the project team before use. No NASA branding, NASA logos, or AI-generated NASA imagery are included in this repository. The project does not claim to be an official NASA product or clinical system.
+
+## Privacy and safety notes
+
+This prototype is for demo use only and should not be run with real personal health data.
+
+- Do not enter real, identifying, or sensitive health information.
+- Demo data is labeled as simulated and is stored in the browser only.
+- Local measurement records are kept in `localStorage` and can be cleared from the interface.
+- Imported CSV content is held in browser memory only and is cleared on refresh or by clearing the imported file.
+- Voice recognition starts only after the user activates it.
+- Avoid speaking personal or identifying health information through the microphone.
+- This prototype is not a medical device; thresholds are illustrative and do not represent medical advice.
+
+## How it works
+
+1. The app loads a set of simulated measurements for a fictional mission crew.
+2. Users can add new values manually or use the speech command flow.
+3. The dashboard summarizes the latest values and highlights illustrative alerts.
+4. Users can import a CSV from NASA OSDR to explore a public research dataset locally.
+5. Data is kept separate from demo records so the prototype remains understandable and responsible.
 
 ## Run locally
 
@@ -35,21 +72,40 @@ npm install
 npm run dev
 ```
 
-Open the local URL printed by Vite. To create a production build:
+Open the local URL printed by Vite in the terminal.
+
+To build for production:
 
 ```bash
 npm run build
 npm run preview
 ```
 
-## Privacy and security limitations
+## Project limitations
 
-This prototype is for demonstration with simulated or public research data only. Do not enter real, identifying, or sensitive health information. Measurement records are stored in the current browser profile using `localStorage`; they are not encrypted, synced, or protected by user accounts. Clearing records removes the app's local measurement list from this browser, but does not securely erase device backups or browser-level copies. Imported CSV content is held in page memory only and cleared on refresh or with the import reset button.
+This project is intentionally limited and should not be interpreted as a real clinical or operational system.
 
-Voice recognition starts only after the user activates it. Depending on the browser and provider, speech recognition may be processed outside the device. Do not speak personal or identifying health information. Use HTTPS when hosting; microphone access requires a secure context in most browsers.
+- It uses illustrative thresholds, not medical decision rules.
+- It does not connect to real sensors, mission telemetry, or clinical systems.
+- It does not replace a physician, clinical review, operational health workflow, or regulatory approval process.
+- OSDR data must be checked for its own units, timepoints, participant context, citation, and reuse terms before interpreting or redistributing it.
 
-This is not a medical device. Demo thresholds are illustrative and must not be used for diagnosis or treatment. The CSV viewer is a generic exploratory tool, not a validated clinical data pipeline. Real health-data use would require appropriate privacy, security, access-control, legal, and clinical review.
+## Citation and use note
 
-## AI use disclosure
+When using public NASA research data, review the official dataset record and associated documentation for exact units, sample context, publication, citation, and any reuse conditions. This project is a prototype and should be treated as an educational demonstration rather than a validated medical or scientific tool.
 
-AI tools assisted with coding and drafting project text. The team reviewed and modified the output. The OSDR source dataset is not AI-generated; imported data is read from the selected local file. No AI-generated imagery, audio, or video is included in this repository.
+## Repository structure
+
+```text
+src/
+  App.tsx
+  NasaDataImport.tsx
+  nasa-data.css
+  safety.css
+README.md
+PITCH.md
+```
+
+## Summary
+
+CrewWell is a proof-of-concept mission health dashboard exploring how health metrics can be surfaced in a clear, usable, and non-diagnostic way. By combining demo data, local record tracking, and NASA open-data import, the project demonstrates a responsible and educational approach to crew health visualization in a space-mission context.
