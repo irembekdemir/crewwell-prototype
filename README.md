@@ -1,2 +1,31 @@
-# crewwell-prototype
-Astronaut health monitoring prototype dashboard for NASA Space Apps style challenge
+# CrewWell — Astronaut Health Prototype
+
+A responsive React + TypeScript dashboard prototype for exploring how crew health and environmental measurements can be collected, viewed over time, and surfaced as non-diagnostic notifications.
+
+## Features
+
+- Health summary cards for pulse, blood pressure, glucose, temperature, sleep, radiation, noise, and bone-density records.
+- Manual measurement entry, including separate systolic and diastolic blood-pressure values.
+- Measurement history and per-metric trend chart.
+- Browser-local persistence using `localStorage`.
+- Demo seed measurements are clearly marked as **Simülasyon**.
+- Optional Turkish browser speech commands where supported: ask for pulse/status or save a simple measurement (for example, “Nabız 72 kaydet”).
+- Responsive dark dashboard layout.
+
+## Run locally
+
+```bash
+npm install
+npm run dev
+```
+
+Open the local URL printed by Vite. To create a production build:
+
+```bash
+npm run build
+npm run preview
+```
+
+## Notes and limitations
+
+This is a hackathon/demo prototype, not a medical device. Seed data and threshold notifications are illustrative only and must not be used for diagnosis or treatment. No real medical device or NASA dataset is connected in this version. Records are stored only in the current browser profile and are not encrypted or synced. Browser speech recognition availability varies by browser and may require microphone permission and a secure context.
