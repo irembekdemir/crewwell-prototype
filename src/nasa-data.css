@@ -17,4 +17,7 @@
 .nasa-table-scroll { overflow-x: auto; margin-top: 12px; }
 .nasa-error { color: #ff9aab; font-size: 11px; }
 .nasa-disclaimer { margin: 15px 0 0; color: #8797ac; }
+.osdr-download { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 12px 0; padding: 12px 14px; border: 1px solid rgba(101,214,196,.25); border-radius: 10px; background: rgba(101,214,196,.05); color: #83e4d4; font-size: 12px; font-weight: 700; text-decoration: none; }
+.osdr-download:hover { background: rgba(101,214,196,.1); }
+.osdr-download small { color: var(--muted); font-size: 9px; font-weight: 500; }
 @media (max-width: 600px) { .nasa-mapping { grid-template-columns: 1fr; } .csv-upload { align-items: flex-start; flex-direction: column; } .nasa-chart-heading { flex-direction: column; } }

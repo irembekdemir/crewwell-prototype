@@ -1,0 +1,25 @@
+.mission-panel { margin: 0 0 18px; }
+.context-badge { border: 1px solid rgba(112,165,255,.25); border-radius: 999px; padding: 7px 10px; color: #a9c5ef; font-size: 10px; }
+.mission-controls { display: flex; align-items: end; justify-content: space-between; gap: 16px; margin: 18px 0 12px; }
+.mission-controls label { display: grid; gap: 7px; color: #aab8ca; font-size: 11px; }
+.routine-progress { display: grid; gap: 3px; text-align: right; }
+.routine-progress strong { color: #65d6c4; font: 700 20px 'Space Grotesk',sans-serif; }
+.routine-progress span,.mission-note { color: var(--muted); font-size: 10px; }
+.routine-list { display: grid; gap: 8px; }
+.routine-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid #253247; border-radius: 10px; color: #cbd8e8; font-size: 11px; cursor: pointer; }
+.routine-item input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.routine-check { display: grid; width: 19px; height: 19px; flex: 0 0 19px; place-items: center; border: 1px solid #506079; border-radius: 6px; color: #06120f; font-size: 12px; }
+.routine-item.done { border-color: rgba(101,214,196,.3); background: rgba(101,214,196,.045); }
+.routine-item.done .routine-check { border-color: #65d6c4; background: #65d6c4; }
+.routine-item:focus-within .routine-check { outline: 2px solid #8db4f4; outline-offset: 2px; }
+.routine-hint { margin-left: auto; color: #8db4f4; font-size: 9px; text-transform: uppercase; letter-spacing: .08em; }
+.mission-note { margin: 12px 0 0; line-height: 1.5; }
+.data-status { width: fit-content; margin-top: 2px; padding: 2px 5px; border-radius: 5px; font-size: 7px; font-weight: 700; letter-spacing: .06em; }
+.status-simulated { background: rgba(250,204,21,.1); color: #e6d57b; }
+.status-recorded { background: rgba(101,214,196,.1); color: #65d6c4; }
+.status-empty { background: rgba(148,164,185,.1); color: #aab8ca; }
+.metric-explanation { color: var(--muted); font-size: 10px; line-height: 1.5; }
+.form-explanation { margin: -5px 0 0; }
+.chart-legend { display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 9px; }
+.legend-dot { width: 7px; height: 7px; border-radius: 50%; }
+@media (max-width: 600px) { .mission-controls { align-items: flex-start; flex-direction: column; } .routine-progress { text-align: left; } }
