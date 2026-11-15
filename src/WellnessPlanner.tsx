@@ -1,5 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
-import './wellness-planner.css'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 
 type MedicationReminder = { id: string; name: string; time: string }
 type DailyState = { date: string; water: number; meals: boolean[]; exerciseDone: boolean[]; routineDone: boolean[] }
@@ -74,7 +73,7 @@ export default function WellnessPlanner() {
       setPlanner((previous) => ({ ...previous, daily: freshDaily() }))
       notifiedRef.current.clear()
     }
-  }, [now, planner.daily.date])
+  }, [planner.daily.date, now])
 
   useEffect(() => {
     if (!('Notification' in window) || Notification.permission !== 'granted') return
@@ -93,7 +92,7 @@ export default function WellnessPlanner() {
     setPlanner((previous) => ({ ...previous, daily: update(previous.daily) }))
   }
 
-  function addMedicationReminder(event: React.FormEvent<HTMLFormElement>) {
+  function addMedicationReminder(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const name = medicationName.trim()
     if (!name) return
@@ -161,3 +160,4 @@ export default function WellnessPlanner() {
     </section>}
   </aside>
 }
+
