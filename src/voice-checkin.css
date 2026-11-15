@@ -7,4 +7,5 @@
 .voice-confirm-actions .discard-button { border-color: rgba(251,113,133,.25); color: #ffb0bd; }
 .voice-examples { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; margin-top: 12px; color: var(--muted); font-size: 10px; }
 .voice-examples code { padding: 4px 6px; border: 1px solid #29364b; border-radius: 6px; color: #b7c5d8; font: inherit; }
+.source-tag.voice-check-in { border-color: rgba(167,139,250,.3); color: #c3a9ff; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
