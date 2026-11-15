@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import NasaDataImport from './NasaDataImport'
 import './safety.css'
@@ -7,10 +7,10 @@ import './voice-checkin.css'
 
 type MetricType = 'heartRate' | 'bloodPressure' | 'glucose' | 'temperature' | 'sleep' | 'noise' | 'radiation' | 'boneDensity'
 type SourceType = 'Simulation' | 'Manual' | 'Device' | 'Voice check-in'
-type Measurement = { id: string; type: MetricType; value: number; diastolic?: number; unit: string; timestamp: string; source: SourceType }
-type PendingVoiceMeasurement = { type: MetricType; value: number; diastolic?: number }
+type Measurement = { id: string; type: MetricType; value: number; diastolic?: number; unit: string; timestamp: string; source: SourceType; note?: string }
+type PendingVoiceMeasurement = { type: MetricType; value: number; diastolic?: number; note: string }
 type SpeechResultEvent = { results: ArrayLike<ArrayLike<{ transcript: string }>> }
-type SpeechRecognitionInstance = { lang: string; continuous: boolean; interimResults: boolean; onresult: ((event: SpeechResultEvent) => void) | null; onerror: (() => void) | null; onend: (() => void) | null; start: () => void }
+type SpeechRecognitionInstance = { lang: string; continuous: boolean; interimResults: boolean; onresult: ((event: SpeechResultEvent) => void) | null; onerror: (() => void) | null; onend: (() => void) | null; start: () => void; stop: () => void }
 type SpeechRecognitionConstructor = new () => SpeechRecognitionInstance
 type SpeechWindow = Window & { SpeechRecognition?: SpeechRecognitionConstructor; webkitSpeechRecognition?: SpeechRecognitionConstructor }
 type Environment = 'Spacecraft' | 'Space station' | 'Rover' | 'Surface base'
@@ -38,6 +38,7 @@ function isMeasurementArray(value: unknown): value is Measurement[] {
   return value.every((item) => item && typeof item === 'object' && typeof item.id === 'string'
     && types.includes(item.type) && typeof item.value === 'number' && Number.isFinite(item.value)
     && (item.diastolic === undefined || (typeof item.diastolic === 'number' && Number.isFinite(item.diastolic)))
+    && (item.note === undefined || typeof item.note === 'string')
     && typeof item.unit === 'string' && typeof item.timestamp === 'string' && Number.isFinite(Date.parse(item.timestamp))
     && ['Simulation', 'Manual', 'Device', 'Voice check-in'].includes(item.source))
 }
@@ -62,7 +63,7 @@ function loadMeasurements(): Measurement[] {
   } catch { return demoData() }
 }
 
-function parseVoiceMeasurement(transcript: string): PendingVoiceMeasurement | null {
+function parseVoiceMeasurement(transcript: string): Omit<PendingVoiceMeasurement, 'note'> | null {
   const normalized = transcript.toLowerCase()
   const type = types.find((candidate) => aliases[candidate].some((alias) => normalized.includes(alias)))
   if (!type) return null
@@ -86,18 +87,25 @@ export default function App() {
   const [formType, setFormType] = useState<MetricType>('heartRate')
   const [value, setValue] = useState('')
   const [diastolic, setDiastolic] = useState('')
+  const [note, setNote] = useState('')
   const [source, setSource] = useState<SourceType>('Manual')
   const [message, setMessage] = useState('')
-  const [voiceMessage, setVoiceMessage] = useState('Start a voice check-in to report a measurement. Your spoken response is not saved unless you confirm a measurement.')
+  const [voiceMessage, setVoiceMessage] = useState('Start a voice check-in to share how you feel and report a measurement. Your entry is saved only after confirmation.')
   const [listening, setListening] = useState(false)
   const [environment, setEnvironment] = useState<Environment>('Spacecraft')
   const [completedTasks, setCompletedTasks] = useState<boolean[]>(() => routineTasks.map(() => false))
   const [pendingVoice, setPendingVoice] = useState<PendingVoiceMeasurement | null>(null)
+  const recognitionRef = useRef<SpeechRecognitionInstance | null>(null)
 
   useEffect(() => {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(measurements)) }
     catch { setMessage('Could not save measurements in this browser. Avoid entering sensitive health data.') }
   }, [measurements])
+
+  useEffect(() => () => {
+    recognitionRef.current?.stop()
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel()
+  }, [])
 
   const latest = useMemo(() => {
     const result: Partial<Record<MetricType, Measurement>> = {}
@@ -114,65 +122,79 @@ export default function App() {
     return items
   }, [latest])
 
-  function speak(text: string) {
-    setVoiceMessage(text)
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel()
-      const utterance = new SpeechSynthesisUtterance(text)
-      utterance.lang = 'en-US'
-      window.speechSynthesis.speak(utterance)
-    }
-  }
-
-  function listenForCheckIn(prompt: string) {
-    if (pendingVoice) return
+  function beginListening(onTranscript: (transcript: string) => void) {
     const host = window as SpeechWindow
     const Recognition = host.SpeechRecognition ?? host.webkitSpeechRecognition
     if (!Recognition) {
+      setListening(false)
       setVoiceMessage('Speech recognition is not supported in this browser. Use the manual measurement form instead.')
       return
     }
     const recognition = new Recognition()
+    recognitionRef.current = recognition
     recognition.lang = 'en-US'
     recognition.continuous = false
     recognition.interimResults = false
-    recognition.onresult = (event) => {
-      const transcript = event.results[0]?.[0]?.transcript?.trim() ?? ''
-      const parsed = parseVoiceMeasurement(transcript)
-      if (!parsed) {
-        setVoiceMessage(transcript
-          ? `I heard your response, but no measurement was saved. To record a value, say a measurement and number, such as “heart rate 72” or “blood pressure 120 over 80.”`
-          : 'I could not hear a measurement. Try again or use the manual form.')
-        return
-      }
-      setPendingVoice(parsed)
-      setVoiceMessage(`I heard ${formatMeasurement(parsed)}. Confirm before saving this voice-reported entry.`)
-      speak(`I heard ${formatMeasurement(parsed)}. Please confirm on screen before I save it.`)
-    }
+    recognition.onresult = (event) => onTranscript(event.results[0]?.[0]?.transcript?.trim() ?? '')
     recognition.onerror = () => { setListening(false); setVoiceMessage('Speech recognition failed. Check microphone permission or use the manual form.') }
-    recognition.onend = () => setListening(false)
-    try {
-      setListening(true)
-      setVoiceMessage(prompt)
-      recognition.start()
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel()
-        const utterance = new SpeechSynthesisUtterance(prompt)
-        utterance.lang = 'en-US'
-        window.speechSynthesis.speak(utterance)
-      }
-    } catch { setListening(false); setVoiceMessage('Could not start speech recognition. Check microphone permission or use the manual form.') }
+    recognition.onend = () => { setListening(false); recognitionRef.current = null }
+    try { setListening(true); setVoiceMessage('Listening…'); recognition.start() }
+    catch { setListening(false); recognitionRef.current = null; setVoiceMessage('Could not start speech recognition. Check microphone permission or use the manual form.') }
+  }
+
+  function promptThenListen(prompt: string, onTranscript: (transcript: string) => void) {
+    setVoiceMessage(prompt)
+    if (!('speechSynthesis' in window)) {
+      beginListening(onTranscript)
+      return
+    }
+    window.speechSynthesis.cancel()
+    const utterance = new SpeechSynthesisUtterance(prompt)
+    utterance.lang = 'en-US'
+    utterance.onend = () => beginListening(onTranscript)
+    utterance.onerror = () => beginListening(onTranscript)
+    window.speechSynthesis.speak(utterance)
   }
 
   function startVoiceCheckIn() {
-    listenForCheckIn('Good morning. How are you feeling today? You can answer, then report a measurement such as heart rate 72.')
+    if (pendingVoice || listening) return
+    const host = window as SpeechWindow
+    if (!(host.SpeechRecognition ?? host.webkitSpeechRecognition)) {
+      setVoiceMessage('Speech recognition is not supported in this browser. Use the manual measurement form instead.')
+      return
+    }
+    promptThenListen('Good morning. How are you feeling today? Briefly describe how you feel.', (feelingTranscript) => {
+      const feeling = feelingTranscript.slice(0, 240)
+      if (!feeling) {
+        setVoiceMessage('I could not hear your response. Start the voice check-in again or use the manual form.')
+        return
+      }
+      promptThenListen('Thanks for sharing. Now report a measurement, for example heart rate 72 or blood pressure 120 over 80.', (measurementTranscript) => {
+        const parsed = parseVoiceMeasurement(measurementTranscript)
+        if (!parsed) {
+          setVoiceMessage('I could not identify a measurement. No entry was saved. Start again and say a measurement name with its value, or use the manual form.')
+          return
+        }
+        const pending = { ...parsed, note: feeling }
+        setPendingVoice(pending)
+        const readback = `${formatMeasurement(pending)}. Your self-reported check-in note is: ${feeling}. Review and confirm on screen before saving.`
+        setVoiceMessage(readback)
+        if ('speechSynthesis' in window) {
+          window.speechSynthesis.cancel()
+          const utterance = new SpeechSynthesisUtterance(readback)
+          utterance.lang = 'en-US'
+          window.speechSynthesis.speak(utterance)
+        }
+      })
+    })
   }
 
   function confirmVoiceMeasurement() {
     if (!pendingVoice) return
     setMeasurements((previous) => [...previous, {
-      id: crypto.randomUUID(), ...pendingVoice, unit: config[pendingVoice.type].unit,
-      timestamp: new Date().toISOString(), source: 'Voice check-in',
+      id: crypto.randomUUID(), type: pendingVoice.type, value: pendingVoice.value,
+      ...(pendingVoice.diastolic !== undefined ? { diastolic: pendingVoice.diastolic } : {}),
+      unit: config[pendingVoice.type].unit, timestamp: new Date().toISOString(), source: 'Voice check-in', note: pendingVoice.note,
     }])
     setVoiceMessage(`${formatMeasurement(pendingVoice)} saved as a voice-reported entry.`)
     setPendingVoice(null)
@@ -183,15 +205,16 @@ export default function App() {
     setFormType(pendingVoice.type)
     setValue(String(pendingVoice.value))
     setDiastolic(pendingVoice.diastolic === undefined ? '' : String(pendingVoice.diastolic))
+    setNote(pendingVoice.note)
     setSource('Voice check-in')
-    setMessage('Review and edit the voice-recognized values, then save them from the form.')
+    setMessage('Review and edit the recognized values and check-in note, then save them from the form.')
     setPendingVoice(null)
     document.getElementById('measurement-entry')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }
 
   function cancelVoiceMeasurement() {
     setPendingVoice(null)
-    setVoiceMessage('Voice entry discarded. No measurement was saved.')
+    setVoiceMessage('Voice entry discarded. No measurement or check-in note was saved.')
   }
 
   function addMeasurement(event: FormEvent<HTMLFormElement>) {
@@ -205,10 +228,11 @@ export default function App() {
     setMeasurements((previous) => [...previous, {
       id: crypto.randomUUID(), type: formType, value: numericValue,
       ...(lower !== undefined ? { diastolic: lower } : {}), unit: config[formType].unit,
-      timestamp: new Date().toISOString(), source,
+      timestamp: new Date().toISOString(), source, ...(note.trim() ? { note: note.trim().slice(0, 240) } : {}),
     }])
     setValue('')
     setDiastolic('')
+    setNote('')
     setMessage('Measurement saved.')
   }
 
@@ -240,8 +264,7 @@ export default function App() {
 
     <section className="metric-grid" aria-label="Latest health measurements">{cards.map((type) => {
       const item = latest[type]
-      const sourceClass = item?.source.toLowerCase().replaceAll(' ', '-') ?? ''
-      return <article className="metric-card" key={type}><div className="metric-icon" style={{ color: config[type].color, backgroundColor: `${config[type].color}18` }}>{type === 'heartRate' ? '♡' : type === 'bloodPressure' ? '⌁' : type === 'glucose' ? '◉' : type === 'temperature' ? '♨' : type === 'sleep' ? '☾' : '✳'}</div><div className="metric-info"><span className="metric-label">{config[type].label}</span><strong>{item ? type === 'bloodPressure' ? `${item.value}/${item.diastolic ?? '—'}` : item.value : '—'}{item && <small> {config[type].unit}</small>}</strong><span className="metric-source">{item?.source ?? 'No measurement yet'}</span><span className={`data-status ${item?.source === 'Simulation' ? 'status-simulated' : item ? 'status-recorded' : 'status-empty'}`}>{item?.source === 'Simulation' ? 'SIMULATED' : item ? 'RECORDED' : 'NO DATA'}</span><span className="sr-only">Source: {item?.source ?? 'No measurement'}</span></div>{sourceClass && <span className="sr-only">{sourceClass}</span>}</article>
+      return <article className="metric-card" key={type}><div className="metric-icon" style={{ color: config[type].color, backgroundColor: `${config[type].color}18` }}>{type === 'heartRate' ? '♡' : type === 'bloodPressure' ? '⌁' : type === 'glucose' ? '◉' : type === 'temperature' ? '♨' : type === 'sleep' ? '☾' : '✳'}</div><div className="metric-info"><span className="metric-label">{config[type].label}</span><strong>{item ? type === 'bloodPressure' ? `${item.value}/${item.diastolic ?? '—'}` : item.value : '—'}{item && <small> {config[type].unit}</small>}</strong><span className="metric-source">{item?.source ?? 'No measurement yet'}</span><span className={`data-status ${item?.source === 'Simulation' ? 'status-simulated' : item ? 'status-recorded' : 'status-empty'}`}>{item?.source === 'Simulation' ? 'SIMULATED' : item ? 'RECORDED' : 'NO DATA'}</span></div></article>
     })}</section>
 
     <section className="main-grid">
@@ -250,12 +273,12 @@ export default function App() {
     </section>
 
     <section className="secondary-grid">
-      <article className="panel" id="measurement-entry"><div className="panel-heading"><div><p className="eyebrow">RECORD ENTRY</p><h2>Add a measurement</h2></div></div><form className="measurement-form" onSubmit={addMeasurement}><label>Measurement type<select className="select-control" value={formType} onChange={(event) => setFormType(event.target.value as MetricType)}>{types.map((type) => <option key={type} value={type}>{config[type].label}</option>)}</select></label><p className="metric-explanation form-explanation">{config[formType].explanation}</p><label>{formType === 'bloodPressure' ? 'Systolic pressure' : 'Value'}<div className="input-with-unit"><input type="number" step="any" min="0" value={value} onChange={(event) => setValue(event.target.value)} required /><span>{config[formType].unit}</span></div></label>{formType === 'bloodPressure' && <label>Diastolic pressure<div className="input-with-unit"><input type="number" step="any" min="0" value={diastolic} onChange={(event) => setDiastolic(event.target.value)} required /><span>mmHg</span></div></label>}<label>Data source<select className="select-control" value={source} onChange={(event) => setSource(event.target.value as SourceType)}><option>Manual</option><option>Device</option><option>Simulation</option><option>Voice check-in</option></select></label><button className="submit-button" type="submit">Save measurement <span>→</span></button>{message && <p className="form-message" role="status">{message}</p>}</form></article>
-      <article className="panel assistant-panel"><div className="panel-heading"><div><p className="eyebrow">VOICE CHECK-IN</p><h2>Crew wellness assistant</h2></div><span className="assistant-orb">✦</span></div><p className="assistant-intro">Start a check-in, say how you feel, then report a measurement by name and value. The assistant reads it back and waits for your on-screen confirmation.</p><div className="voice-status" aria-live="polite"><span className={listening ? 'listening-dot active' : 'listening-dot'} />{voiceMessage}</div>{pendingVoice && <div className="voice-confirm" role="group" aria-label="Confirm voice measurement"><strong>Ready to save</strong><p>{formatMeasurement(pendingVoice)}</p><div className="voice-confirm-actions"><button type="button" className="confirm-button" onClick={confirmVoiceMeasurement}>Confirm and save</button><button type="button" className="edit-button" onClick={editVoiceMeasurement}>Edit values</button><button type="button" className="discard-button" onClick={cancelVoiceMeasurement}>Cancel</button></div></div>}<div className="voice-examples"><span>Try saying:</span><code>“Heart rate 72”</code><code>“Blood pressure 120 over 80”</code></div><p className="privacy-note"><strong>Microphone privacy:</strong> Recognition starts only when you activate the button. The app does not save audio or unconfirmed transcripts. Depending on your browser, speech recognition may be processed by the browser or its provider. Avoid speaking sensitive personal information.</p></article>
+      <article className="panel" id="measurement-entry"><div className="panel-heading"><div><p className="eyebrow">RECORD ENTRY</p><h2>Add a measurement</h2></div></div><form className="measurement-form" onSubmit={addMeasurement}><label>Measurement type<select className="select-control" value={formType} onChange={(event) => setFormType(event.target.value as MetricType)}>{types.map((type) => <option key={type} value={type}>{config[type].label}</option>)}</select></label><p className="metric-explanation form-explanation">{config[formType].explanation}</p><label>{formType === 'bloodPressure' ? 'Systolic pressure' : 'Value'}<div className="input-with-unit"><input type="number" step="any" min="0" value={value} onChange={(event) => setValue(event.target.value)} required /><span>{config[formType].unit}</span></div></label>{formType === 'bloodPressure' && <label>Diastolic pressure<div className="input-with-unit"><input type="number" step="any" min="0" value={diastolic} onChange={(event) => setDiastolic(event.target.value)} required /><span>mmHg</span></div></label>}<label>Check-in note (optional)<textarea className="note-input" maxLength={240} value={note} onChange={(event) => setNote(event.target.value)} placeholder="A brief self-reported note" /></label><label>Data source<select className="select-control" value={source} onChange={(event) => setSource(event.target.value as SourceType)}><option>Manual</option><option>Device</option><option>Simulation</option><option>Voice check-in</option></select></label><button className="submit-button" type="submit">Save measurement <span>→</span></button>{message && <p className="form-message" role="status">{message}</p>}</form></article>
+      <article className="panel assistant-panel"><div className="panel-heading"><div><p className="eyebrow">VOICE CHECK-IN</p><h2>Crew wellness assistant</h2></div><span className="assistant-orb">✦</span></div><p className="assistant-intro">Start a two-step check-in: describe how you feel, then report a measurement. The assistant reads back both your note and measurement and waits for your confirmation before saving.</p><div className="voice-status" aria-live="polite"><span className={listening ? 'listening-dot active' : 'listening-dot'} />{voiceMessage}</div>{pendingVoice && <div className="voice-confirm" role="group" aria-label="Confirm voice check-in"><strong>Review before saving</strong><p>{formatMeasurement(pendingVoice)}</p><p className="voice-note-preview">Self-reported note: “{pendingVoice.note}”</p><div className="voice-confirm-actions"><button type="button" className="confirm-button" onClick={confirmVoiceMeasurement}>Confirm and save</button><button type="button" className="edit-button" onClick={editVoiceMeasurement}>Edit values</button><button type="button" className="discard-button" onClick={cancelVoiceMeasurement}>Cancel</button></div></div>}<div className="voice-examples"><span>Try saying:</span><code>“I feel well and rested”</code><code>“Heart rate 72”</code><code>“Blood pressure 120 over 80”</code></div><p className="privacy-note"><strong>Microphone privacy:</strong> Recognition starts only when you activate the button. The app stores the self-reported note and measurement only after confirmation; it does not save audio or unconfirmed transcripts. Depending on your browser, speech recognition may be processed by the browser or its provider. Avoid speaking sensitive personal information.</p></article>
     </section>
 
     <NasaDataImport />
-    <section className="panel history-panel"><div className="panel-heading"><div><p className="eyebrow">RECENT ENTRIES</p><h2>Measurement history</h2></div><div className="history-actions"><span className="history-count">{measurements.length} records</span><button className="clear-button" type="button" onClick={clearLocalMeasurements}>Clear local measurement records</button></div></div><div className="table-scroll"><table><thead><tr><th>Measurement</th><th>Value</th><th>Time</th><th>Source</th></tr></thead><tbody>{[...measurements].sort((a, b) => b.timestamp.localeCompare(a.timestamp)).slice(0, 10).map((item) => <tr key={item.id}><td>{config[item.type].label}</td><td>{item.type === 'bloodPressure' ? `${item.value}/${item.diastolic ?? '—'}` : item.value} {item.unit}</td><td>{new Date(item.timestamp).toLocaleString('en-US')}</td><td><span className={`source-tag ${item.source.toLowerCase().replaceAll(' ', '-')}`}>{item.source}</span></td></tr>)}</tbody></table>{measurements.length === 0 && <p className="empty-history">No local measurement records. Demo readings are currently cleared.</p>}</div></section>
+    <section className="panel history-panel"><div className="panel-heading"><div><p className="eyebrow">RECENT ENTRIES</p><h2>Measurement history</h2></div><div className="history-actions"><span className="history-count">{measurements.length} records</span><button className="clear-button" type="button" onClick={clearLocalMeasurements}>Clear local measurement records</button></div></div><div className="table-scroll"><table><thead><tr><th>Measurement</th><th>Value and note</th><th>Time</th><th>Source</th></tr></thead><tbody>{[...measurements].sort((a, b) => b.timestamp.localeCompare(a.timestamp)).slice(0, 10).map((item) => <tr key={item.id}><td>{config[item.type].label}</td><td>{item.type === 'bloodPressure' ? `${item.value}/${item.diastolic ?? '—'}` : item.value} {item.unit}{item.note && <small className="history-note">{item.note}</small>}</td><td>{new Date(item.timestamp).toLocaleString('en-US')}</td><td><span className={`source-tag ${item.source.toLowerCase().replaceAll(' ', '-')}`}>{item.source}</span></td></tr>)}</tbody></table>{measurements.length === 0 && <p className="empty-history">No local measurement records. Demo readings are currently cleared.</p>}</div></section>
     <footer className="footer">CrewWell prototype · Local records are not encrypted · Demo, not a medical device</footer>
   </main>
 }
