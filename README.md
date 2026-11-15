@@ -1,8 +1,8 @@
 # CrewWell — Astronaut Health Monitoring Prototype
 
-CrewWell is a React and TypeScript web prototype exploring how mission teams could review crew health and environmental measurements over time. It combines simulated demo records, a mission-context checklist, trend charts, non-diagnostic notices, a voice-assisted measurement check-in, and a local CSV viewer for NASA Open Science Data Repository (OSDR) research data.
+CrewWell is a React and TypeScript web prototype exploring how mission teams could review crew health and environmental records over time. It combines simulated demo measurements, a mission-context checklist, trend charts, optional voice check-ins, a wellness planner, non-diagnostic notices, and a local CSV viewer for NASA Open Science Data Repository (OSDR) research data.
 
-> **Demo only:** CrewWell is not a medical device, is not connected to mission telemetry, and must not be used to diagnose or treat anyone. Do not enter real, identifying, or sensitive health information.
+> **Demo only:** CrewWell is not a medical device, is not connected to mission telemetry or real sensors, and must not be used to diagnose or treat anyone. Do not enter real, identifying, or sensitive health information.
 
 ## NASA OSDR research data
 
@@ -19,19 +19,20 @@ Imported CSV files are parsed in the browser and are not uploaded to a server. I
 
 - Measurement summary cards and per-metric trend charts
 - Manual recording, including separate systolic and diastolic blood-pressure values
-- Optional English voice check-in that reads a recognized measurement back and requires on-screen confirmation before saving
-- Selectable demo mission environment: spacecraft, space station, rover, or surface base
-- Manually completed daily-routine checklist; it is not a timed reminder or mission procedure
-- Plain-language context for each measurement
-- Clear data-source labels and illustrative, non-diagnostic check-in notices
-- Browser-local measurement storage with a control to clear the app's local records
+- Optional English voice check-in that records a self-reported note and measurement only after on-screen confirmation
+- Mission wellness planner with daily routine check-ins, generic movement prompts, meal check-ins, and a water-serving counter
+- User-configured medication reminder labels and times; no medication or dosing recommendations
+- Optional browser notifications and in-app reminders while the dashboard is open
+- Selectable demo mission environment and manually completed daily checklist
+- Plain-language context for measurements, data-source labels, and illustrative non-diagnostic check-in notices
+- Browser-local measurement and wellness-planner storage with controls to clear measurement records
 - NASA OSDR CSV import and visualization in page memory
 
 ## Privacy and AI disclosures
 
 AI tools assisted with coding and drafting parts of the project. The team reviewed and modified the output. The OSDR source dataset is not AI-generated. No AI-generated images, audio, or video are included in this repository. No NASA logos or branding are used in AI-generated material.
 
-Measurement records are stored in browser `localStorage` and are **not encrypted**, synced, or protected by user accounts. Clearing records removes the app's local measurement list but is not secure erasure of device backups or browser-level copies. Voice check-in starts only after the user activates it. Audio and unconfirmed transcripts are not saved by the app; however, depending on the browser, speech recognition may be processed by the browser or its provider. Avoid speaking sensitive information. Use HTTPS when hosting, but HTTPS alone does not make this prototype suitable for real health data.
+Measurement records, check-in notes, and planner settings are stored in browser `localStorage` and are **not encrypted**, synced, or protected by user accounts. Clearing measurement records does not clear planner settings. Do not enter real or sensitive health information or identifying medication details. Voice recognition depends on browser support and may be processed by the browser or its provider; the app does not save audio or unconfirmed transcripts. Desktop reminders are best-effort and work only while the dashboard is open; they are not guaranteed alarms.
 
 ## Run locally
 
@@ -47,8 +48,8 @@ npm run build
 npm run preview
 ```
 
-## Submission and limitations
+## Scope and limitations
 
-This prototype does not connect to real sensors, mission telemetry, or clinical systems. Its environment selector changes demo context only and does not apply validated environment-specific health rules. Thresholds are illustrative, not clinically validated. The NASA CSV viewer is a generic exploratory tool, not a validated clinical data pipeline. Speech recognition support varies by browser, connection, and microphone environment; manual entry remains available. Real health-data use would require appropriate privacy, security, access-control, legal, and clinical review.
+This prototype does not connect to real sensors, mission telemetry, or clinical systems. Its environment selector changes demo context only. Thresholds and wellness prompts are illustrative, not clinically validated or individualized. Medication reminders use a user-entered label and time only; follow the schedule provided by the user's care team. The planner does not prescribe medication, dosage, diet, hydration targets, or exercise. Browser reminders may not run if the browser or dashboard is closed. Real health-data use would require appropriate privacy, security, access-control, legal, clinical, and operational review.
 
-Before submitting, run the production build, test the measurement-entry, voice-confirmation, local-record clearing, and CSV-import flows, verify the data source citation, and include the currently required submission materials in English. Check the latest official Space Apps guide for event-specific format and limits.
+Before submitting, run the production build and test measurement entry, voice confirmation, wellness planner, medication reminder, local record clearing, and NASA CSV import. Check the current event submission requirements and verify dataset citation and reuse terms.
