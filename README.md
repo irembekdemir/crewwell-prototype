@@ -1,6 +1,8 @@
-# CrewWell — Astronaut Health Prototype
+# CrewWell — Astronaut Health Monitoring Prototype
 
-A responsive React + TypeScript dashboard prototype exploring how crew health and environmental measurements can be collected, viewed over time, and surfaced as non-diagnostic notifications.
+CrewWell is a prototype prepared for the **NASA Space Apps Challenge**. It explores the challenge of **monitoring astronauts’ health during space missions** by bringing health and environmental measurements together in a clear dashboard, showing trends over time, and surfacing non-diagnostic check-in notifications.
+
+This project was developed with the assistance of AI tools during the coding process. The team reviewed and adapted the generated code for this prototype.
 
 ## Features
 
