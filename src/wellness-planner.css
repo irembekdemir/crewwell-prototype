@@ -26,4 +26,24 @@
 .medication-list button { padding: 5px 8px; font-size: 9px; }
 .medication-due { margin: 10px 0 0; padding: 9px; border: 1px solid rgba(250,204,21,.25); border-radius: 8px; background: rgba(250,204,21,.06); color: #f2d879; font-size: 10px; line-height: 1.45; }
 .wellness-status { margin: 10px 0 0; color: #9ce8dc; font-size: 10px; line-height: 1.45; }
-@media (max-width: 480px) { .wellness-widget { right: 12px; bottom: 12px; width: calc(100vw - 24px); } .wellness-panel { max-height: 72vh; padding: 16px; } }
+
+.sensor-panel { margin-bottom: 18px; }
+.sensor-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 18px; }
+.sensor-stat { display: grid; gap: 3px; padding: 12px; border: 1px solid rgba(72,92,121,.7); border-radius: 10px; background: rgba(12,21,34,.7); }
+.sensor-stat span { color: var(--muted); font-size: 10px; }
+.sensor-stat strong { font-size: 16px; }
+.sensor-recommendation { margin-top: 16px; padding: 14px; border: 1px solid rgba(113,166,255,.2); border-radius: 12px; background: rgba(60,90,145,.08); }
+.sensor-recommendation.priority-warning { border-color: rgba(250,204,21,.3); background: rgba(250,204,21,.04); }
+.sensor-recommendation.priority-critical { border-color: rgba(251,113,133,.25); background: rgba(251,113,133,.06); }
+.sensor-recommendation h3 { margin: 6px 0 10px; }
+.sensor-recommendation p { margin: 0 0 10px; color: var(--muted); font-size: 11px; line-height: 1.6; }
+.sensor-recommendation strong { display: block; color: #ecf3ff; font-size: 11px; line-height: 1.5; }
+.small-eyebrow { margin: 0; }
+.sensor-panel .panel-heading > div { min-width: 0; }
+.sensor-panel .panel-heading .eyebrow::after { content: ' · SIMULATED SENSOR FEED · DEMO ONLY'; color: #f2d879; letter-spacing: .08em; }
+.complaint-box { display: grid; gap: 10px; margin-top: 14px; padding-top: 10px; border-top: 1px solid rgba(55,72,97,.7); }
+.complaint-box label { display: grid; gap: 7px; color: #aab8ca; font-size: 11px; }
+.complaint-box p { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.6; }
+.mini-button { padding: 8px 10px; border: 1px solid rgba(101,214,196,.25); border-radius: 9px; background: rgba(101,214,196,.08); color: #9ce8dc; font-size: 10px; }
+@media (max-width: 760px) { .sensor-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 480px) { .wellness-widget { right: 12px; bottom: 12px; width: calc(100vw - 24px); } .wellness-panel { max-height: 72vh; padding: 16px; } .sensor-grid { grid-template-columns: 1fr; } }
