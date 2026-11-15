@@ -1,6 +1,6 @@
 # crew-WELL — Astronaut Health Monitoring Prototype
 
-crew-WELL is a React and TypeScript web prototype exploring how mission teams could review crew health and environmental records over time. It combines simulated demo measurements, a mission-context checklist, trend charts, optional voice check-ins, a mission wellness planner, non-diagnostic movement and hydration support, and a local CSV viewer for NASA Open Science Data Repository (OSDR) research data.
+crew-WELL is a React and TypeScript web prototype exploring how mission teams could review crew health and environmental records over time due to the **NASA Space Apps Challenge** Hackathon. It combines simulated demo measurements, a mission-context checklist, trend charts, optional voice check-ins, a mission wellness planner, non-diagnostic movement and hydration support, and a local CSV viewer for NASA Open Science Data Repository (OSDR) research data.
 
 > **Demo only:** crew-WELL is not a medical device, is not connected to mission telemetry or real sensors, and must not be used to diagnose or treat anyone. Do not enter real, identifying, or sensitive health information.
 
